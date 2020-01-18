@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/index.css')}}">
+    <title>TicTac-Toe</title>
+</head>
+<body>
+    <div id="menu">
+        <div></div>
+        <div>
+            <input id="room" type="text" maxlength="4" placeholder="Roomname">
+            <br/>
+            <br/>
+            <input id="name" type="text" placeholder="Name">
+            <br/>
+            <br/>
+            <div id='options'>
+                <button onclick="button(1)">Join Game</button>
+                <!-- <button onclick="button(2)">Create</button> -->
+            </div>
+        </div>
+        <div></div>
+    </div>
+        <!--  -->
+    <div id="container">
+        <div class=space id=a>one</div>
+        <div class=space id=b>two</div>
+        <div class=space id=c>.</div>
+        <div class=space id=d>.</div>
+        <div class=space id=e>.</div>
+        <div class=space id=g>.</div>
+        <div class=space id=h>.</div>
+        <div class=space id=i>.</div>
+        <div class=space id=j>.</div>
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+<!-- <script type="text/javascript" src="{{ url_for('static', filename='game.js')}}"></script>
+-->
+ <script>
+    class Game
+    {
+        constructor()
+        {
+            this.field=[
+                0,0,0,
+                0,0,0,
+                0,0,0
+            ]
+            this.turns=0
+            this.room=null
+        }
+        play()
+        {
+            console.log('play')
+        }
+
+        //checkWin()
+    }
+    class Player
+    {
+        constructor(name)
+        {
+            this.name=name
+            this.symbol='x'
+        }
+    }
+    //////////
+    //**global variables
+    let tiles = document.getElementsByClassName('space')
+    for(let i=0;i<tiles.length;i++)
+    {
+        tiles[i].addEventListener('click',function()
+        {
+            socket.emit('play',{'player':x.player,'room':x.roomm,'move':i})
+        })
+    }
+
+
+    let game = new Game()
+    let myPlayer = null
+    var socket = io();
+    //////////
+    function button(x)
+    {
+        let room=document.getElementById('room').value
+        let name=document.getElementById('name').value
+        
+        if(room.length && name.length)
+        {
+            if(x===1)
+            {
+                game.room=room
+                myPlayer = new Player(name)
+                socket.emit('joinRoom',{'name':name,'room':room})
+            }
+        }
+        console.log('check',game.field)
+    }
+
+/* socket.on('connect', function() {
+    console.log('someone joined');
+    //socket.emit('join', {username:'kevin',room:'0'})
+   
+}); 
+*/
+
+socket.on('joined',function(data)
+{
+    if(data.okay)
+    {
+        document.getElementById('menu').remove()
+        document.getElementById('container').style.display='grid'
+        if(data.second)
+        {
+            myPlayer.symbol='o'
+        }
+    }
+    else
+    {
+        alert(data.message)
+    }
+    console.log(data)
+})
+
+socket.on('cast',function(data)
+{
+    console.log('')
+})
+</script> 
+</html>
