@@ -12,7 +12,7 @@
     <div id="menu">
         <div></div>
         <div>
-            <input id="room" type="text" maxlength="4" placeholder="Roomname">
+            <input id="room" type="text" maxlength="4" autofocus placeholder="Roomname">
             <br/>
             <br/>
             <input id="name" type="text" placeholder="Name">
@@ -20,7 +20,7 @@
             <br/>
             <div id='options'>
                 <button onclick="button(1)">Join Game</button>
-                <!-- <button onclick="button(2)">Create</button> -->
+                <button onclick="button(2)">Create</button>
             </div>
         </div>
         <div></div>
@@ -53,53 +53,78 @@
             ]
             this.turns=0
             this.room=null
+            this.start=false
         }
-        play()
+        start()
         {
-            console.log('play')
+            this.start=true
+        }
+        
+        publish(symbol,move)
+        {
+            console.log('publish')
         }
 
         //checkWin()
     }
     class Player
     {
-        constructor(name)
+        constructor(name,symbol='X')
         {
             this.name=name
-            this.symbol='x'
+            this.symbol=symbol
+            this.turn=false
         }
     }
     //////////
     //**global variables
+    let game = new Game()
+    let myPlayer = null
+    var socket = io();
+
     let tiles = document.getElementsByClassName('space')
     for(let i=0;i<tiles.length;i++)
     {
         tiles[i].addEventListener('click',function()
         {
-            socket.emit('play',{'player':x.player,'room':x.roomm,'move':i})
+            if( myPlayer.turn )
+            {
+                socket.emit('play',{'player':myPlayer.symbol,'room':game.room,'move':i})
+            }
+            else
+            {
+                console.log('not your turn')
+            }
         })
     }
-
-
-    let game = new Game()
-    let myPlayer = null
-    var socket = io();
     //////////
     function button(x)
     {
-        let room=document.getElementById('room').value
-        let name=document.getElementById('name').value
+        let room=document.getElementById('room')
+        let name=document.getElementById('name')
         
-        if(room.length && name.length)
+        if(room.value.length && name.value.length)
         {
             if(x===1)
             {
-                game.room=room
-                myPlayer = new Player(name)
-                socket.emit('joinRoom',{'name':name,'room':room})
+                /* 
+                game.room=room.value
+                */
+                myPlayer = new Player(name.value)
+                socket.emit('joinRoom',{'name':name.value,'room':room.value})
+            }
+            else
+            {
+                myPlayer= new Player(name.value,'O')//make a player 2
+                socket.emit('createRoom',{'name':name.value,'room':room.value})
             }
         }
-        console.log('check',game.field)
+        else
+        {
+            alert('Enter room and name!')
+        }
+        room.value=''
+        name.value=''
     }
 
 /* socket.on('connect', function() {
@@ -109,27 +134,39 @@
 }); 
 */
 
-socket.on('joined',function(data)
+socket.on('entered',function(data)
 {
-    if(data.okay)
+    document.getElementById('menu').remove()
+    document.getElementById('container').style.display='grid'
+    console.log(data.message)
+    if(data.second)
     {
-        document.getElementById('menu').remove()
-        document.getElementById('container').style.display='grid'
-        if(data.second)
-        {
-            myPlayer.symbol='o'
-        }
+        console.log('startGame')
     }
-    else
+})
+
+socket.on('startGame',function(data)
+{
+
+
+})
+socket.on('turn',function(data)
+{
+    turn=data['player']
+    if( myPlayer.symbol === turn )
     {
-        alert(data.message)
+        myPlayer.turn=true
     }
-    console.log(data)
 })
 
 socket.on('cast',function(data)
 {
-    console.log('')
+    console.log(data)
+})
+
+socket.on('err',function(data)
+{
+    alert(data.message)
 })
 </script> 
 </html>

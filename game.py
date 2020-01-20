@@ -17,50 +17,54 @@ def index():
 def handle(data):
     name=data['name']
     room=data['room']
-    join_room(room)
-    emit('cast',{'message':'{} created and entered {}'.format(name,room)}, room=room)
+
+    if room in clients:
+        emit('err',{'message':'{} already exists'.format(room)})
+    else:
+        join_room(room)
+        clients[room]={'X':name}
+        emit('entered',{'message':'{} created and entered {}'.format(name,room),'created':1}, room=room)
+    
+    print(clients)
 
 @socketio.on('joinRoom')
 def handle(data):
     name=data['name']
     room=data['room']
-    success=False
-    second=0
 
-    try:
-        players=len(clients[room])
-        if players==2:
+    if room in clients:
+        if len(clients[room])==2:
             print('room full')
-            emit('joined',{
-                'message':'room {} is full'.format(room),
-                'okay':0
+            emit('err',{
+                'message':'room {} is full'.format(room)
             })
         
         else:
             join_room(room)
-            clients[room]['o']=name
-            second=1
-            success=True
-
-    except KeyError as e:
-        join_room(room)
-        clients[room]={'x':name}
-        okay=True
-
-    if success:
-        emit('joined',{
+            clients[room]['O']=name
+            emit('entered',{
             'message':'{} has joined {}'.format(name, room),
-            'okay':1,
-            'second':second
+            'second':1
         }, room=room)
+    else:
+        emit('err',{
+                'message':'room {} does not exist!'.format(room)
+            })
     print(clients)
+
+@socketio.on('startGame')
+def handle(data):
+    room=data['room']
+    print('start',room)
+    emit('startGame', room=room)
+
 
 @socketio.on('play')
 def handle(data):
     room=data['room']
     move=data['move']
     player=data['player']
-    emit('cast',{player:move}, room=room)
+    emit('cast',{'player':player,'move':move}, room=room)
 
 @socketio.on('check')
 def handle(data):
