@@ -26,9 +26,10 @@
         <div></div>
     </div>
         <!--  -->
+    <h3 id="tName"></h3>
     <div id="container">
-        <div class=space id=a>one</div>
-        <div class=space id=b>two</div>
+        <div class=space id=a>.</div>
+        <div class=space id=b>.</div>
         <div class=space id=c>.</div>
         <div class=space id=d>.</div>
         <div class=space id=e>.</div>
@@ -55,21 +56,25 @@
             this.room=null
             this.start=false
         }
-        start()
+        play(pos,sym)
         {
-            this.start=true
+            this.field[pos]=sym
+            this.turns++
         }
-        
-        publish(symbol,move)
+        check(n)
         {
-            console.log('publish')
+            if(!this.field[n])
+            {
+                return true
+            }
+            return false
         }
 
         //checkWin()
     }
     class Player
     {
-        constructor(name,symbol='X')
+        constructor(name,symbol)
         {
             this.name=name
             this.symbol=symbol
@@ -82,14 +87,19 @@
     let myPlayer = null
     var socket = io();
 
+    let menu=document.getElementById('menu')
+    let board=document.getElementById('container')
     let tiles = document.getElementsByClassName('space')
+    let status = document.getElementById('tName')
+
     for(let i=0;i<tiles.length;i++)
     {
         tiles[i].addEventListener('click',function()
         {
             if( myPlayer.turn )
             {
-                socket.emit('play',{'player':myPlayer.symbol,'room':game.room,'move':i})
+                socket.emit('play',{'symbol':myPlayer.symbol,'room':game.room,'move':i})
+                myPlayer.turn=false
             }
             else
             {
@@ -105,19 +115,17 @@
         
         if(room.value.length && name.value.length)
         {
-            if(x===1)
+            if(x===1)//join
             {
-                /* 
-                game.room=room.value
-                */
-                myPlayer = new Player(name.value)
+                myPlayer = new Player(name.value,'O')
                 socket.emit('joinRoom',{'name':name.value,'room':room.value})
             }
-            else
+            else//create
             {
-                myPlayer= new Player(name.value,'O')//make a player 2
+                myPlayer= new Player(name.value,'X')//make a player 2
                 socket.emit('createRoom',{'name':name.value,'room':room.value})
             }
+            game.room=room.value
         }
         else
         {
@@ -136,32 +144,50 @@
 
 socket.on('entered',function(data)
 {
-    document.getElementById('menu').remove()
-    document.getElementById('container').style.display='grid'
+    if(menu)
+    {
+        menu.remove()
+    }
+
+    board.style.display='grid'
     console.log(data.message)
     if(data.second)
     {
-        console.log('startGame')
+        //send a symbol of 'O' to start player 'X' as the active player
+        socket.emit('changeTurn',{'symbol':'O','room':game.room})
+        status.style.display='block'
     }
 })
 
-socket.on('startGame',function(data)
+socket.on('newTurn',function(data)
 {
-
-
-})
-socket.on('turn',function(data)
-{
-    turn=data['player']
-    if( myPlayer.symbol === turn )
+    let symbol=data.symbol
+    let currPlayer=''
+    if(myPlayer.symbol===symbol)
     {
         myPlayer.turn=true
+        currPlayer=myPlayer.name
     }
+    if(currPlayer==='')
+        status.innerText = `It's not your turn.`
+    else
+        status.innerText = `It's your turn`
 })
 
 socket.on('cast',function(data)
 {
-    console.log(data)
+    const { symbol,move }=data
+
+    if(game.check(move))
+    {
+        game.play(move,symbol)//publish player's turn
+        tiles[move].innerText=symbol
+        socket.emit('changeTurn',{'symbol':symbol,'room':game.room})//end this turn
+    }
+    else
+    {
+        console.log('Spot used')
+    }
 })
 
 socket.on('err',function(data)

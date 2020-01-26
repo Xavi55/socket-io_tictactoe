@@ -52,19 +52,32 @@ def handle(data):
             })
     print(clients)
 
-@socketio.on('startGame')
+@socketio.on('prepGame')
 def handle(data):
     room=data['room']
-    print('start',room)
-    emit('startGame', room=room)
-
+    emit('startGame',{'symbol':'X'} ,room=room)
 
 @socketio.on('play')
 def handle(data):
     room=data['room']
     move=data['move']
-    player=data['player']
-    emit('cast',{'player':player,'move':move}, room=room)
+    symbol=data['symbol']
+    emit('cast',{'symbol':symbol,'move':move}, room=room)
+
+@socketio.on('changeTurn')
+def handle(data):
+    room=data['room']
+    if 'start' in data:
+        print('Start Game')
+        emit('newTurn',{'symbol':'X'},room=room)
+    else:
+        symbol=''
+        if data['symbol']=='X':
+            symbol='O'
+        else:
+            symbol='X'
+        emit('newTurn',{'symbol':symbol},room=room)
+
 
 @socketio.on('check')
 def handle(data):

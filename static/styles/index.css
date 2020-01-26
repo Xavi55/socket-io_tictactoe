@@ -47,3 +47,8 @@ html, body
 {
     color:red;
 }
+#tName
+{
+    display: none;
+    text-align: center;
+}
