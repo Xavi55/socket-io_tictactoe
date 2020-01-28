@@ -6,6 +6,8 @@
 html, body
 {
     height: 100%;
+    font-family: sans-serif;
+    font-size: 2em;
 }
 #menu
 {
@@ -34,21 +36,70 @@ html, body
 
     display: none;
     grid-template-columns: repeat(3, 1fr);
-    margin:20% 20%;
-    height:80%;
+    height:40%;
+    border-radius: 15px;
+    border:solid black;
+    margin: 0 2%;
 }
-.space
+/* crosses */
+h2.space:nth-child(n+1):nth-child(-n+3)/*1st to 3rd*/
+{
+    border-bottom: solid black;
+}
+h2.space:nth-child(n+4):nth-child(-n+6)
+{
+    border-top: solid black;
+    border-bottom: solid black;
+
+}
+h2.space:nth-child(n+7)/*7th onward*/
+{
+    border-top: solid black;
+}
+h2.space.left
+{
+    border-right: solid black;
+}
+h2.space.mid
+{
+    border-right: solid black;
+    border-left: solid black;
+}
+h2.space.right
+{
+    border-left: solid black;
+}
+/*  */
+#container .space
 {
     display: flex;
     align-items: center;
     justify-content: center;
 }
-#a
-{
-    color:red;
-}
 #tName
 {
     display: none;
     text-align: center;
+}
+@media only screen and (min-width: 450px)
+{
+    #container
+    {
+        height: 60%;
+    }
+}
+@media only screen and (min-width: 600px)
+{
+    #container
+    {
+        height: 85%;
+    }
+}
+@media only screen and (min-width: 800px)
+{
+    #container
+    {
+        height: 96%;
+        margin: 0 15%;
+    }
 }
