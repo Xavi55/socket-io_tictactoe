@@ -47,18 +47,25 @@
     {
         constructor()
         {
-            this.field=[
-                0,0,0,
-                0,0,0,
-                0,0,0
-            ]
+            this.field={
+                0:'',1:'',2:'',
+                3:'',4:'',5:'',
+                6:'',7:'',8:''
+            }
             this.turns=0
             this.room=null
             this.start=false
         }
         play(pos,sym)
         {
-            this.field[pos]=sym
+            if(sym==='X')
+            {
+                this.field[pos]='X'
+            }
+            else
+            {
+                this.field[pos]='O'
+            }
             this.turns++
         }
         check(n)
@@ -69,8 +76,46 @@
             }
             return false
         }
-
-        //checkWin()
+        checkWin()
+        {
+            let xCount=0
+            let oCount=0
+            if(this.turns>=5 && this.turns<=9)
+            {
+                console.log(this.field)
+                for(let path in winPaths)
+                {
+                    for(let index in winPaths[path])
+                    {
+                        if(this.field[winPaths[path][index]]==='X')
+                        {
+                            xCount++
+                            if(xCount===3)
+                            {
+                                console.log('X wins')
+                                game.start=false
+                            }   
+                        }
+                        else if(this.field[winPaths[path][index]]==='O')
+                        {
+                            oCount++
+                            if(oCount===3)
+                            {
+                                console.log('O wins')
+                                game.start=false
+                            }
+                            
+                        }
+                        else
+                        {
+                            xCount=0
+                            oCount=0
+                            continue
+                        }
+                    }
+                }
+            }
+        }
     }
     class Player
     {
@@ -84,6 +129,21 @@
     //////////
     //**global variables
     let game = new Game()
+    const winPaths=[
+        [0,1,2],
+        [3,4,5],
+        [6,7,8],
+        [0,3,6],
+        [1,4,7],
+        [2,5,8],
+        [0,4,8],
+        [2,4,6],
+    ]
+    /*
+        012
+        345
+        678 
+     */
     let myPlayer = null
     var socket = io();
 
@@ -96,14 +156,23 @@
     {
         tiles[i].addEventListener('click',function()
         {
-            if( myPlayer.turn )
+            if( myPlayer.turn && game.start)
             {
-                socket.emit('play',{'symbol':myPlayer.symbol,'room':game.room,'move':i})
-                myPlayer.turn=false
+                if(game.check(i))
+                {
+                    socket.emit('play',{'symbol':myPlayer.symbol,'room':game.room,'move':i})
+                    myPlayer.turn=false  
+                }
+                else
+                {
+                    console.log('Spot used')
+                }
+                //socket.emit('play',{'symbol':myPlayer.symbol,'room':game.room,'move':i})
+                //myPlayer.turn=false
             }
             else
             {
-                console.log('not your turn')
+                console.log('not your turn or gameover')
             }
         })
     }
@@ -155,6 +224,7 @@ socket.on('entered',function(data)
     {
         //send a symbol of 'O' to start player 'X' as the active player
         socket.emit('changeTurn',{'symbol':'O','room':game.room})
+        game.start=true
         status.style.display='block'
     }
 })
@@ -178,16 +248,10 @@ socket.on('cast',function(data)
 {
     const { symbol,move }=data
 
-    if(game.check(move))
-    {
-        game.play(move,symbol)//publish player's turn
-        tiles[move].innerText=symbol
-        socket.emit('changeTurn',{'symbol':symbol,'room':game.room})//end this turn
-    }
-    else
-    {
-        console.log('Spot used')
-    }
+    game.play(move,symbol)//record players turn
+    tiles[move].innerText=symbol//publish player's turn
+    game.checkWin()
+    socket.emit('changeTurn',{'symbol':symbol,'room':game.room})//end this turn
 })
 
 socket.on('err',function(data)
