@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/index.css')}}">
     <title>TicTac-Toe</title>
 </head>
@@ -39,7 +38,9 @@
         <h2 class="space right">.</h2>
     </div>
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"
+    integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ=="
+    crossorigin="anonymous"></script>
 <!-- <script type="text/javascript" src="{{ url_for('static', filename='game.js')}}"></script>
 -->
  <script>
@@ -78,11 +79,10 @@
         }
         checkWin()
         {
-            let xCount=0
-            let oCount=0
             if(this.turns>=5 && this.turns<=9)
             {
-                console.log(this.field)
+                let xCount=0
+                let oCount=0
                 for(let path in winPaths)
                 {
                     for(let index in winPaths[path])
@@ -90,31 +90,30 @@
                         if(this.field[winPaths[path][index]]==='X')
                         {
                             xCount++
-                            if(xCount===3)
-                            {
-                                console.log('X wins')
-                                game.start=false
-                            }   
+                           
                         }
-                        else if(this.field[winPaths[path][index]]==='O')
+                        if(this.field[winPaths[path][index]]==='O')
                         {
                             oCount++
-                            if(oCount===3)
-                            {
-                                console.log('O wins')
-                                game.start=false
-                            }
-                            
-                        }
-                        else
-                        {
-                            xCount=0
-                            oCount=0
-                            continue
                         }
                     }
+                    if(xCount===3)
+                    {
+                        console.log('X wins')
+                        game.start=false
+                        return 1
+                    }
+                    if(oCount===3)
+                    {
+                        console.log('O wins')
+                        game.start=false
+                        return 2
+                    }
+                    xCount=0
+                    oCount=0
                 }
             }
+            return false
         }
     }
     class Player
@@ -250,8 +249,22 @@ socket.on('cast',function(data)
 
     game.play(move,symbol)//record players turn
     tiles[move].innerText=symbol//publish player's turn
-    game.checkWin()
-    socket.emit('changeTurn',{'symbol':symbol,'room':game.room})//end this turn
+    winner=game.checkWin()
+    if(winner)
+    {
+        if(winner==1)
+        {
+            status.innerText='X wins!'
+        }
+        if(winner==2)
+        {
+            status.innerText=' wins!'
+        }
+    }
+    else
+    {
+        socket.emit('changeTurn',{'symbol':symbol,'room':game.room})//end this turn
+    }
 })
 
 socket.on('err',function(data)
